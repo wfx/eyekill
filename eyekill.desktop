@@ -1,0 +1,19 @@
+[Desktop Entry]
+#Encoding=UTF-8
+Type=Application
+Name=Eye Kill
+#GenericName=eyeKill
+#GenericName[eo]=eyeKill
+#GenericName[it]=eyeKill
+#GenericName[ru]=eyeKill
+Comment=Task killer
+Comment[eo]=Task killer
+Comment[es]=Task killer
+Comment[gl]=Task killer
+Comment[it]=Task killer
+Comment[pt]=Task killer
+Comment[ru]=Task killer
+Exec=python2 eyekill
+Icon=eyekill.png
+Categories=System;Task killer;
+StartupWMClass=eyekill
