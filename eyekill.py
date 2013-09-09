@@ -57,7 +57,7 @@ def app(userid = os.getuid()):
     info_frame.show()
     #       Box -> Frame -> Label (default Information)
     lb = elementary.Label(win)
-    lb.text_set('<b>Kill process with a double klick</b>')
+    lb.text_set('<b>Kill process with a double click</b>')
     info_frame.content_set(lb)
     lb.show()
 
