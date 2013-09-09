@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-
+#
 # Copyright (c) 2013, Wolfgang Morawetz.
 # All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -11,7 +11,14 @@
 # hbytes 99.99% based on the code from http://www.guguncube.com
 #
 #
-# version: 0.2
+# version: 0.9 (bug hunt)
+#
+# TODO: Testing
+#       Code cleanup
+#       Paint a application icon
+#
+#
+
 
 import os
 import signal
@@ -27,6 +34,7 @@ def destroy(obj):
 # - Application - {{{
 def app(userid = os.getuid()):
     # Main Window
+    global win, main_box
     win = elementary.Window("my app", elementary.ELM_WIN_BASIC)
     win.title_set("eye kill")
     win.callback_delete_request_add(destroy)
@@ -35,7 +43,6 @@ def app(userid = os.getuid()):
     win.resize_object_add(bg)
     bg.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
     bg.show()
-    
 
     # View: Information(PID)
     #       Box
@@ -54,73 +61,47 @@ def app(userid = os.getuid()):
     info_frame.content_set(lb)
     lb.show()
 
-
     # View: PID List
     #       Box -> GenList
-    pid_list = elementary.Genlist(win)
-    pid_list.callback_clicked_double_add(kill_bill)
-    win.resize_object_add(pid_list)
-    pid_list.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-    pid_list.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
-    pid_list_itc = elementary.GenlistItemClass(
-                        item_style="default",
-                        text_get_func=pid_list_text_get,
-                        content_get_func=pid_list_content_get,
-                        state_get_func=pid_list_state_get)
-    
-    plist = psutil.get_pid_list()
-    for i in plist:
-        pid = psutil.Process(i)
-        if (pid.uids.real == userid):
-            pid_list.item_append(pid_list_itc, pid.pid, func=update_main_box)
+    ps_list = elementary.List(win)
+    ps_list.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+    ps_list.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+    ps_list.callback_clicked_double_add(kill_bill)
+    pid_list = psutil.get_pid_list()
+    for i in pid_list:
+        ps = psutil.Process(i)
+        if (ps.uids.real == userid):
+            short_info = '%s / %s / %s' % (ps.pid, ps.name, ps.status)
+            ps_list.item_append(label = short_info, callback = update_info, ps=ps, lb=lb)
 
-    main_box.pack_end(pid_list)
-    pid_list.show()
-
+    main_box.pack_end(ps_list)
+    ps_list.go()
+    ps_list.show()
     
     # View: Application
-    win.resize(432, 400)
+    win.resize(320, 384)
     win.show()
 #}}}
 
 # - Label Process information - {{{
-def update_main_box(gli, gl, *args, **kwargs):
-    bill = psutil.Process(gli.data_get())
-    print ("\n--- Process Information ---")
-    print ("PID   : %s" % bill.pid)
-    print ("Name  : %s" % bill.name)
-    print ("Mem   : %s" % hbytes(bill.get_memory_info().vms))
-    print ("CPU/P : %s" % bill.get_cpu_percent())
+def update_info(li, it, lb, ps):
+    info = \
+        ("<b>PID: <i>%i</i></b>, <b>Name :<i>%s</i></b></br><b>Memory (vms) :<i>%s</i><b>, <b>CPU: <i>%s</i><b>, <b>State: <i>%s</i><b>" % \
+        (ps.pid, ps.name, hbytes(ps.get_memory_info().vms), ps.get_cpu_percent(interval=.1), ps.status ))
+    lb.text_set(info)
 #}}}
 
 # - Kill Bill :-) - {{{
-def kill_bill(gli, gl):
-    bill = gl.data_get()
+def kill_bill(obj, cb_data):
+    bill = cb_data.data_get()[1]['ps'].pid
     print ("Bill %s ... Gotcha" % bill)
     os.kill(bill, signal.SIGTERM)
     if (os.kill(bill, 0)):
         os.kill(bill, signal.SIGKILL)
-    gli.delete()
+    item = obj.selected_item_get()
+    item.disabled_set(True)
 #}}}
 
-# - Pid List Text Get - {{{
-def pid_list_text_get(obj, part, item_data):
-    p = psutil.Process(item_data)
-    return "%s :: %s" % (p.pid, p.name)
-#}}}
-
-# - Pid List Content Get - {{{
-def pid_list_content_get(obj, part, data):
-    ic = elementary.Icon(obj)
-    ic.file_set("images/logo_small.png")
-    ic.size_hint_aspect_set(evas.EVAS_ASPECT_CONTROL_VERTICAL, 1, 1)
-    return ic
-#}}}
-
-# - Pid List State Get - {{{
-def pid_list_state_get(obj, part, item_data):
-    return False
-#}}}
 
 # - Human Bytes from Guguncube - {{{
 def hbytes(num):
@@ -130,6 +111,8 @@ def hbytes(num):
         num /= 1024.0
     return "%3.2f%s" % (num, 'TB')
 #}}}
+
+
 if __name__ == "__main__":
     elementary.init()
     app()
