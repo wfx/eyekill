@@ -96,11 +96,7 @@ class Application(object):
 
 
     def update_info(self,li , it, p):
-        info = ("<b>PID: <i>%i</i></b>,\
-                <b>Name :<i>%s</i></b>\
-                </br><b>Memory (vms) :<i>%s</i><b>, \
-                <b>CPU: <i>%s</i><b>, \
-                <b>State: <i>%s</i><b>" % \
+        info = ("<b>PID: <i>%i</i></b>, <b>Name :<i>%s</i></b></br><b>Memory (vms) :<i>%s</i><b>, <b>CPU: <i>%s</i><b>, <b>State: <i>%s</i><b>" % \
                 (p.pid, p.name,hbytes(p.get_memory_info().vms), p.get_cpu_percent(interval=.1), p.status ))
         self.lb.text_set(info)
 
@@ -124,7 +120,11 @@ def hbytes(num):
 
 def get_de():
     de = None
-    #Hmmm ......
+    p = psutil.get_process_list()
+    for i in p:
+        if (i.name == 'enlightenment'):
+            de = i.pid
+            print "found enlightenment"
     return de
 
 
