@@ -96,8 +96,8 @@ class Application(object):
 
 
     def update_info(self,li , it, p):
-        info = ("<b>PID: <i>%i</i></b>, <b>Name :<i>%s</i></b></br><b>Memory (vms) :<i>%s</i><b>, <b>CPU: <i>%s</i><b>, <b>State: <i>%s</i><b>" % \
-                (p.pid, p.name,hbytes(p.get_memory_info().vms), p.get_cpu_percent(interval=.1), p.status ))
+        info = ("PID %i STAT %s TIME %s<br/> MEM %s COMMAND %s" % \
+                (p.pid, p.status, p.get_cpu_times().user, hbytes(p.get_memory_info().rss), p.name))
         self.lb.text_set(info)
 
 
