@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2013, Wolfgang Morawetz.
+# Copyright (c) 2013, Wolfgang Morawetz (wfx).
 # All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -21,22 +21,27 @@
 #
 
 
-import os
-import signal
-import psutil
-import elementary
-import edje
-import ecore
-import evas
+import os, sys, getopt
+import signal, psutil
+import elementary, edje, ecore, evas
 
 
 class Application(object):
 
 
-    def __init__(self, parent_pid = None):
+    def __init__(self):
         self.userid = os.getuid()
-        self.parent_pid = parent_pid
-
+        self.parent_pid = None
+        self.win = None
+        self.bg = None
+        self.main_box = None
+        self.info_frame = None
+        self.lb = None
+        self.ps_list = None
+            
+        self.set_parent_pid(None)
+    
+    def run(self):
         self.win = elementary.Window("my app", elementary.ELM_WIN_BASIC)
         self.win.title_set("eye kill")
         self.win.callback_delete_request_add(self.destroy)
@@ -74,12 +79,20 @@ class Application(object):
         self.win.show()
 
 
+    def set_parent_pid(self, pid):
+        self.parent_pid = pid
+
+    
+    def get_parent_pid(self):
+        return self.parent_pid
+
+
     def destroy(self, obj):
         elementary.exit()
 
 
     def update_list(self):
-        if self.parent_pid is None:
+        if self.get_parent_pid() is None:
             pl = psutil.get_pid_list()
             for p in pl:
                 p = psutil.Process(p)
@@ -118,6 +131,7 @@ def hbytes(num):
         num /= 1024.0
     return "%3.2f%s" % (num, 'TB')
 
+
 def get_de():
     de = None
     p = psutil.get_process_list()
@@ -128,11 +142,33 @@ def get_de():
     return de
 
 
-if __name__ == "__main__":
-    elementary.init()
-
-    Application(get_de())
+def sysopt(argv):
     
+    mode = None
+
+    try:
+        opts, args = getopt.getopt(argv,"hm:","mode=")
+    except getopt.GetoptError:
+        print 'eyekill.py -m <e17> or eykill.py'
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print 'eyekill.py -m <e17> or eykill.py'
+            sys.exit()
+        elif opt in ("-m", "--mode"):
+            if arg == 'e17':
+                mode = get_de()
+    return mode
+
+    
+if __name__ == "__main__":
+
+    mode = sysopt(sys.argv[1:])  
+    
+    elementary.init()
+    eyekill = Application()
+    eyekill.set_parent_pid(mode)
+    eyekill.run()
     elementary.run()
     elementary.shutdown()
 
