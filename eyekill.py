@@ -7,7 +7,7 @@
 # found in the LICENSE file.
 #
 #
-
+__author__ = "Wolfgang Morawetz"
 __version__ = "0.8 Bug hunt"
 
 import os, sys, getopt
@@ -255,7 +255,7 @@ Options:\n\
 --process         Process(es)" % __version__
 
     try:
-        opts, args = getopt.gnu_getopt(argv,"hdp:v",["help", "desktop=", "process="])
+        opts, args = getopt.gnu_getopt(argv,"h:d:p:v",["help", "desktop=", "process="])
     except getopt.GetoptError:
         print help_msg
         sys.exit(2)
