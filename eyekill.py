@@ -242,7 +242,6 @@ class ConfigOption(object):
 
 #{{{ - cmdline : Return False or Commandline option application's main mode <enlightenment>  -
 def cmdline(argv = sys.argv[1:]):
-    #FIXME: BUG! --desktop and --procees work but not -d or -p ?!?!
     desktop = ''
     process = ''
     verbose = False
