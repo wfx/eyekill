@@ -1,4 +1,4 @@
-#!/usr/bin/env python2 
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2013, Wolfgang Morawetz (wfx).
@@ -6,15 +6,31 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-#
+
 __author__ = "Wolfgang Morawetz"
-__version__ = "0.8 Bug hunt"
+__version__ = "0.2014.08.16"
 
-import os, sys, getopt
-import signal, psutil
-import elementary, edje, ecore, evas
+import os
+import sys
+import getopt
+import signal
+#psutil > 2.0 !!!
+import psutil
 
-#{{{ EyeKill -
+from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
+from efl import elementary
+from efl.elementary.window import StandardWindow
+from efl.elementary.box import Box
+from efl.elementary.frame import Frame
+from efl.elementary.label import Label
+from efl.elementary.list import List
+from efl.elementary.button import Button
+from efl.elementary.panel import Panel, ELM_PANEL_ORIENT_LEFT
+
+EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
+FILL_BOTH = EVAS_HINT_FILL, EVAS_HINT_FILL
+
+#   EyeKill
 class Application(object):
     def __init__(self):
         self.cfg = ConfigOption()
@@ -26,31 +42,28 @@ class Application(object):
         self.lb = None
         self.ps_list = None
 
-        self.win = elementary.Window("my app", elementary.ELM_WIN_BASIC)
+        self.win = StandardWindow("my app", "eyekill", size=(320, 384))
         self.win.title_set("eye kill")
         self.win.callback_delete_request_add(self.destroy)
 
-        self.bg = elementary.Background(self.win)
-        self.win.resize_object_add(self.bg)
-        self.bg.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        self.bg.show()
-
-        self.main_box = elementary.Box(self.win)
-        self.main_box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        self.main_box = Box(self.win)
+        self.main_box.size_hint_weight = EXPAND_BOTH
         self.win.resize_object_add(self.main_box)
         self.main_box.show()
-        self.info_frame = elementary.Frame(self.win)
+
+        self.info_frame = Frame(self.win)
         self.info_frame.text_set("Information")
         self.main_box.pack_end(self.info_frame)
         self.info_frame.show()
-        self.lb = elementary.Label(self.win)
+
+        self.lb = Label(self.win)
         self.lb.text_set('<b>Kill process with a double click</b>')
         self.info_frame.content_set(self.lb)
         self.lb.show()
 
-        self.ps_list = elementary.List(self.win)
-        self.ps_list.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        self.ps_list.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        self.ps_list = List(self.win)
+        self.ps_list.size_hint_weight = EXPAND_BOTH
+        self.ps_list.size_hint_align = FILL_BOTH
         self.ps_list.callback_clicked_double_add(self.kill_bill)
 
         self.update_list()
@@ -73,30 +86,30 @@ class Application(object):
         if bool(self.cfg.get_desktop()):
             for de in self.cfg.get_desktop():
                 ps = psutil.Process(get_pid_by_name(de))
-                pl = ps.get_children(get_pid_by_name(de))
+                pl = ps.children()
                 for p in pl:
-                    if p.uids.real == self.userid:
+                    if p.uids().real == self.userid:
                         if p.name not in self.cfg.get_process():
-                            short_info = '%s / %s / %s' % (p.pid, p.name, p.status)
+                            short_info = '%s / %s / %s' % (p.pid, p.name(), p.status())
                             self.ps_list.item_append(label = short_info, callback = self.update_info, p = p)
         else:
             pl = psutil.get_pid_list()
             for p in pl:
                 p = psutil.Process(p)
-                if p.uids.real == self.userid:
-                    if p.name not in self.cfg.get_process():
-                        short_info = '%s / %s / %s' % (p.pid, p.name, p.status)
+                if p.uids().real == self.userid:
+                    if p.name() not in self.cfg.get_process():
+                        short_info = '%s / %s / %s' % (p.pid, p.name(), p.status())
                         self.ps_list.item_append(label = short_info, callback = self.update_info, p = p)
 
 
     def update_info(self,li , it, p):
         info = ("PID %i STAT %s TIME %s<br/>MEM %s CPU %s COMMAND %s" % \
                (p.pid,\
-                p.status,\
+                p.status(),\
                 p.get_cpu_times().user,\
                 hbytes(p.get_memory_info().rss),\
                 p.get_cpu_percent(interval=0),\
-                p.name))
+                p.name()))
         self.lb.text_set(info)
 
 
@@ -108,27 +121,26 @@ class Application(object):
             os.kill(bill, signal.SIGKILL)
         item = obj.selected_item_get()
         item.disabled_set(True)
-#}}}
 
-#{{{ hbytes : Recalculate byte's into a more readable format -
+#   hbytes :
+#   Recalculate byte's into a more readable format
 def hbytes(num):
     for x in ['bytes','KB','MB','GB']:
         if num < 1024.0:
             return "%3.2f%s" % (num, x)
         num /= 1024.0
     return "%3.2f%s" % (num, 'TB')
-#}}}
 
-#{{{ get_pid_by_name : Return False or PID by name -
+#   get_pid_by_name :
+#   Return False or PID by name
 def get_pid_by_name(value):
     p = psutil.get_process_list()
     for i in p:
-        if (i.name == value):
+        if (i.name() == value):
             return i.pid
     return False
-#}}}
 
-#{{{ - ConfigOption -
+#   ConfigOption
 class ConfigOption(object):
    
     def __init__(self):
@@ -142,15 +154,15 @@ class ConfigOption(object):
         
         if self.verbose:
             xy = self.get_desktop()
-            print "Desktop: item's: ",xy," True?: ",bool(xy)," Type: ",type(xy)
+            print ("Desktop: item's: ",xy," True?: ",bool(xy)," Type: ",type(xy))
             xy = self.get_process()
-            print "process: item's: ",xy," True?: ",bool(xy)," Type: ",type(xy)
+            print ("process: item's: ",xy," True?: ",bool(xy)," Type: ",type(xy))
 
         self.desktop_cleanup()
 
         if self.verbose:
             xy = self.get_desktop()
-            print "Desktop cleaup: item's: ",xy," True?: ",bool(xy)," Type: ",type(xy)
+            print ("Desktop cleaup: item's: ",xy," True?: ",bool(xy)," Type: ",type(xy))
         
 
 
@@ -173,7 +185,7 @@ class ConfigOption(object):
     def desktop_cleanup(self):
         for de in self.get_desktop():
             if not get_pid_by_name(de):
-                print "Warning: please remove desktop option: %s !" % de 
+                print ("Warning: please remove desktop option: %s !" % de)
                 self.del_desktop(de)
 
 
@@ -238,9 +250,9 @@ class ConfigOption(object):
     def del_process(self, value = None):
         if value in self.process:
             self.process.remove(value)
-#}}}
 
-#{{{ - cmdline : Return False or Commandline option application's main mode <enlightenment>  -
+#   cmdline :
+#   Return False or Commandline option application's main mode <enlightenment>
 def cmdline(argv = sys.argv[1:]):
     desktop = ''
     process = ''
@@ -256,13 +268,13 @@ Options:\n\
     try:
         opts, args = getopt.gnu_getopt(argv,"h:d:p:v",["help", "desktop=", "process="])
     except getopt.GetoptError:
-        print help_msg
+        print (help_msg)
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-v':
             verbose = True
         elif opt == '-h':
-            print help_msg
+            print (help_msg)
             sys.exit()
         elif opt in ("-d", "--desktop"):
             desktop = arg
@@ -270,7 +282,6 @@ Options:\n\
             process = arg
 
     return (desktop,process,verbose)
-#}}}
 
 if __name__ == "__main__":
 
@@ -279,5 +290,4 @@ if __name__ == "__main__":
     elementary.run()
     elementary.shutdown()
 
-# vim:foldmethod=marker
 
