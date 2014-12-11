@@ -32,15 +32,19 @@ import signal
 #psutil > 2.0 !!!
 import psutil
 
-from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
-from efl import elementary
-from efl.elementary.window import StandardWindow
-from efl.elementary.box import Box
-from efl.elementary.frame import Frame
-from efl.elementary.label import Label
-from efl.elementary.list import List
-from efl.elementary.button import Button
-from efl.elementary.panel import Panel, ELM_PANEL_ORIENT_LEFT
+try:
+    from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
+    from efl import elementary
+    from efl.elementary.window import StandardWindow
+    from efl.elementary.box import Box
+    from efl.elementary.frame import Frame
+    from efl.elementary.label import Label
+    from efl.elementary.list import List
+    from efl.elementary.button import Button
+    from efl.elementary.panel import Panel, ELM_PANEL_ORIENT_LEFT
+except ImportError:
+    printErr("ImportError: Please install Python-EFL:\n ", PY_EFL)
+    exit(1)
 
 EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
 FILL_BOTH = EVAS_HINT_FILL, EVAS_HINT_FILL
