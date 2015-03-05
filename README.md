@@ -5,6 +5,8 @@ A tiny taskkiller in python for Enlightenment.
 
 ![Screenshot](https://github.com/wfx/eyekill/blob/master/data/screenshot.png)
 
+If you search for a realy good functional process killer then
+i suggest: ![Exterminator](https://github.com/JeffHoogland/Exterminator)
 
 ## Requirements ##
 
